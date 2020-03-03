@@ -82,6 +82,27 @@ Then, to guarantee that `fusionauth` and its dependencies are ready before runni
 $ docker-compose run --rm startup_services
 ```
 
+You may specify multiple endpoints to wait for JSON response from by seperating them with spaces in the `command` directive:
+
+```yaml
+  startup_services:
+    image: trevorcsmith/wait-for-json
+    depends_on:
+      - fusionauth
+    networks:
+      - fusionauth
+    command: fusionauth:9011/api/foo fusionauth:9011/api/bar fusionauth:9011/api/baz
+```
+
+```yaml
+  start_dependencies:
+    image: trevorcsmith/wait-for-json
+    environment:
+      - SLEEP_LENGTH: 1
+      - TIMEOUT_LENGTH: 60
+      - JSON_TYPE: array
+```
+
 By default, there will be a 2 second sleep time between each check. You can modify this by setting the `SLEEP_LENGTH` environment variable:
 
 ```yaml

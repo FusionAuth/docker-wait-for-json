@@ -1,5 +1,4 @@
-FROM alpine:3.6
-
-ADD entrypoint.sh /usr/local/bin/entrypoint.sh
-
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+FROM alpine:3.7
+RUN apk add --no-cache curl jq
+COPY entrypoint.sh /usr/local/bin/
+ENTRYPOINT ["entrypoint.sh"]
