@@ -7,7 +7,7 @@ version: '3'
 
 services:
   startup_services:
-    image: trevorcsmith/wait-for-json
+    image: fusionauth/wait-for-json
     depends_on:
       - fusionauth
     networks:
@@ -86,7 +86,7 @@ You may specify multiple endpoints to wait for JSON response from by seperating 
 
 ```yaml
   startup_services:
-    image: trevorcsmith/wait-for-json
+    image: fusionauth/wait-for-json
     depends_on:
       - fusionauth
     networks:
@@ -96,7 +96,7 @@ You may specify multiple endpoints to wait for JSON response from by seperating 
 
 ```yaml
   start_dependencies:
-    image: trevorcsmith/wait-for-json
+    image: fusionauth/wait-for-json
     environment:
       - SLEEP_LENGTH: 1
       - TIMEOUT_LENGTH: 60
@@ -107,7 +107,7 @@ By default, there will be a 2 second sleep time between each check. You can modi
 
 ```yaml
   start_dependencies:
-    image: trevorcsmith/wait-for-json
+    image: fusionauth/wait-for-json
     environment:
       - SLEEP_LENGTH: 0.5
 ```
@@ -116,7 +116,7 @@ By default, there will be a 300 seconds timeout before cancelling the wait_for. 
 
 ```yaml
   start_dependencies:
-    image: trevorcsmith/wait-for-json
+    image: fusionauth/wait-for-json
     environment:
       - SLEEP_LENGTH: 1
       - TIMEOUT_LENGTH: 60
@@ -126,7 +126,7 @@ By default, we will wait for a JSON object to be returned from the specified end
 
 ```yaml
   start_dependencies:
-    image: trevorcsmith/wait-for-json
+    image: fusionauth/wait-for-json
     environment:
       - SLEEP_LENGTH: 1
       - TIMEOUT_LENGTH: 60
