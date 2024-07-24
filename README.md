@@ -11,69 +11,97 @@ services:
     depends_on:
       - fusionauth
     networks:
-      - fusionauth
+      - fusionauth_net
     command: fusionauth:9011/api/status
 
   db:
-    image: postgres:9.6
+    image: postgres:16.0-bookworm
     environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - 54320:5432
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
-      - db
+      - db_net
     restart: unless-stopped
+    volumes:
+      - db_data:/var/lib/postgresql/data
 
   search:
-    image: docker.elastic.co/elasticsearch/elasticsearch:6.3.1
+    image: opensearchproject/opensearch:2.11.0
     environment:
       cluster.name: fusionauth
-      bootstrap.memory_lock: "true"
-      ES_JAVA_OPTS: "${ES_JAVA_OPTS}"
-    ports:
-    - 9200:9200
-    - 9300:9300
-    networks:
-      - search
+      discovery.type: single-node
+      node.name: search
+      plugins.security.disabled: true
+      bootstrap.memory_lock: true
+      OPENSEARCH_JAVA_OPTS: ${OPENSEARCH_JAVA_OPTS}
+    healthcheck:
+      interval: 10s
+      retries: 80
+      test: curl --write-out 'HTTP %{http_code}' --fail --silent --output /dev/null http://localhost:9200/
     restart: unless-stopped
     ulimits:
       memlock:
         soft: -1
         hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    ports:
+      - 9200:9200 # REST API
+      - 9600:9600 # Performance Analyzer
+    volumes:
+      - search_data:/usr/share/opensearch/data
+    networks:
+      - search_net
 
   fusionauth:
     image: fusionauth/fusionauth-app:latest
     depends_on:
-      - db
-      - search
+      db:
+        condition: service_healthy
+      search:
+        condition: service_healthy
     environment:
       DATABASE_URL: jdbc:postgresql://db:5432/fusionauth
-      DATABASE_ROOT_USER: ${POSTGRES_USER}
+      DATABASE_ROOT_USERNAME: ${POSTGRES_USER}
       DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
-      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_USERNAME: ${DATABASE_USERNAME}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD}
-      FUSIONAUTH_MEMORY: ${FUSIONAUTH_MEMORY}
-      FUSIONAUTH_SEARCH_SERVERS: http://search:9200
-      FUSIONAUTH_URL: http://fusionauth:9010
-      FUSIONAUTH_KICKSTART: /usr/local/fusionauth/kickstart.json
+      FUSIONAUTH_APP_MEMORY: ${FUSIONAUTH_APP_MEMORY}
+      FUSIONAUTH_APP_RUNTIME_MODE: ${FUSIONAUTH_APP_RUNTIME_MODE}
+      FUSIONAUTH_APP_URL: http://fusionauth:9011
+      SEARCH_SERVERS: http://search:9200
+      SEARCH_TYPE: elasticsearch
+      FUSIONAUTH_APP_KICKSTART_FILE: ${FUSIONAUTH_APP_KICKSTART_FILE}
     networks:
-     - db
-     - fusionauth
-     - search
+      - db_net
+      - search_net
+      - fusionauth_net
     restart: unless-stopped
     ports:
-      - 9010:9011
+      - 9011:9011
     volumes:
-      - ./kickstart.json:/usr/local/fusionauth/kickstart.json
+      - fusionauth_config:/usr/local/fusionauth/config
+      - ./kickstart:/usr/local/fusionauth/kickstart
 
 networks:
-  db:
+  db_net:
     driver: bridge
-  fusionauth:
+  fusionauth_net:
     driver: bridge
-  search:
+  search_net:
     driver: bridge
+
+volumes:
+  db_data:
+  fusionauth_config:
+  search_data:
 ```
 
 Then, to guarantee that `fusionauth` and its dependencies are ready before running proceeding by waiting on a JSON response from `fusionauth:9011/api/status`:
@@ -90,7 +118,7 @@ You may specify multiple endpoints to wait for JSON response from by seperating 
     depends_on:
       - fusionauth
     networks:
-      - fusionauth
+      - fusionauth_net
     command: fusionauth:9011/api/foo fusionauth:9011/api/bar fusionauth:9011/api/baz
 ```
 
