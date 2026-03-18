@@ -57,6 +57,7 @@ services:
       FUSIONAUTH_SEARCH_SERVERS: http://search:9200
       FUSIONAUTH_URL: http://fusionauth:9010
       FUSIONAUTH_KICKSTART: /usr/local/fusionauth/kickstart.json
+      FUSIONAUTH_APP_INSTALLATION_SOURCE: fusionauth-wait-for-json
     networks:
      - db
      - fusionauth
